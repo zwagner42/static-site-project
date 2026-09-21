@@ -1,6 +1,5 @@
-from enum import Enum
 import re
-
+from enum import Enum
 
 HEADING_REGEX = r"^#{1,6}\s[\s\S]*"
 CODE_REGEX = r"^`{3}\n[\s\S]+`{3}$"

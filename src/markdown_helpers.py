@@ -1,6 +1,10 @@
 import re
 
-from textnode import TextNode, TextType
+from blocktype import BlockType, block_to_block_type
+from htmlnode import HTMLNode
+from leafnode import LeafNode
+from src.parentnode import ParentNode
+from textnode import TextNode, TextType, text_node_to_html_node
 
 
 def text_to_textnodes(text: str) -> list[TextNode]:
@@ -20,25 +24,115 @@ def markdown_to_blocks(markdown: str) -> list[str]:
     if not markdown:
         return []
 
-    blocks = [block.strip() for block in markdown.split("\n\n")]
+    blocks = [block.strip() for block in markdown.split("\n\n") if block]
 
     return blocks
 
 
+def markdown_to_html_node(markdown: str) -> HTMLNode:
+    if not markdown:
+        return HTMLNode(None, None, None, None)
+
+    markdown_blocks = markdown_to_blocks(markdown)
+
+    children = []
+    for block in markdown_blocks:
+        new_node = block_to_html_node(block)
+        children.append(new_node)
+
+    return ParentNode("div", children)
+
+
+def block_to_html_node(block) -> ParentNode:
+    match block_to_block_type(block):
+        case BlockType.PARAGRAPH:
+            return block_to_paragraph(block)
+        case BlockType.QUOTE:
+            return block_to_blockquote(block)
+        case BlockType.UNORDERED_LIST:
+            return block_to_unordered_list(block)
+        case BlockType.ORDERED_LIST:
+            return block_to_ordered_list(block)
+        case BlockType.CODE:
+            return block_to_code(block)
+        case BlockType.HEADING:
+            return block_to_heading(block)
+
+def block_to_paragraph(block: str) -> ParentNode:
+    parent = ParentNode("p", [])
+
+    parent.children = text_to_children(block.replace("\n", " "))
+
+    return parent
+
+def block_to_blockquote(block: str) -> ParentNode:
+    lines = block.split("\n")
+    new_lines = []
+
+    for line in lines:
+        if not line.startswith(">"):
+            raise ValueError("invalid quote block")
+
+        new_lines.append(line.lstrip(">").strip())
+
+    content = " ".join(new_lines)
+    children = text_to_children(content)
+
+    return ParentNode("blockquote", children)
+
+def block_to_unordered_list(block: str) -> ParentNode:
+    items = block.split("\n")
+    html_items = []
+    for list_item in items:
+        text = list_item[2:]
+        html_items.append(ParentNode("li", text_to_children(text)))
+
+    return ParentNode("ul", html_items)
+
+def block_to_ordered_list(block: str) -> ParentNode:
+    items = block.split("\n")
+    html_items = []
+    for list_item in items:
+        parts = list_item.split(". ", 1)
+        text =parts[1]
+        html_items.append(ParentNode("li", text_to_children(text)))
+
+    return ParentNode("ol", html_items)
+
+def block_to_code(block: str) -> ParentNode:
+    if not block.startswith("```") or not block.endswith("```"):
+        raise ValueError("invalid code block")
+
+    text = block[4:-3]
+    raw_text_node = TextNode(text, TextType.TEXT)
+    code = ParentNode("code", [text_node_to_html_node(raw_text_node)])
+
+    return ParentNode("pre", [code])
+
+def block_to_heading(block: str) -> ParentNode:
+    num_signs = 0
+    for index in range(len(block)):
+        if block[index] != "#":
+            break
+        num_signs += 1
+
+    if num_signs + 1 > 6:
+        raise ValueError(f"invalid heading level: {num_signs}")
+
+    return ParentNode(f"h{num_signs}", text_to_children(block[num_signs + 1:]))
+
+def text_to_children(text):
+    text_nodes = text_to_textnodes(text)
+
+    html_nodes = []
+    for text_node in text_nodes:
+        html_nodes.append(text_node_to_html_node(text_node))
+
+    return html_nodes
+
 def split_nodes_delimiter(old_nodes: list[TextNode], delimiter: str, text_type: TextType) -> list[TextNode]:
 
     new_nodes = []
-    delimiter_text_type = TextType.TEXT
-
-    match delimiter:
-        case "**":
-            delimiter_text_type = TextType.BOLD
-        case "_":
-            delimiter_text_type = TextType.ITALIC
-        case "`":
-            delimiter_text_type = TextType.CODE
-        case _:
-            delimiter_text_type = TextType.TEXT
 
     for old_node in old_nodes:
         if old_node.text == "":
@@ -56,7 +150,7 @@ def split_nodes_delimiter(old_nodes: list[TextNode], delimiter: str, text_type: 
             if i % 2 == 0:
                 new_nodes.append(TextNode(split_content[i], TextType.TEXT))
             else:
-                new_nodes.append(TextNode(split_content[i], delimiter_text_type))
+                new_nodes.append(TextNode(split_content[i], text_type))
 
     return new_nodes
 
