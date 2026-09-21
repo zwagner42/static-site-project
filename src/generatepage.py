@@ -22,8 +22,8 @@ def generate_page(from_path: Path, template_path: Path, dest_path: Path, base_pa
     template_content = template_path_content.replace("{{ Title }}", title)
     template_content = template_content.replace("{{ Content }}", html_content)
 
-    template_content = template_content.replace('href="/', f'href="{base_path}/')
-    template_content = template_content.replace('src="/', f'src="{base_path}/')
+    template_content = template_content.replace("href='/", f"href='{base_path}/")
+    template_content = template_content.replace("src='/", f"src='{base_path}/")
 
     dest_path.parent.mkdir(parents=True, exist_ok=True)
 
