@@ -3,9 +3,9 @@ from enum import Enum
 
 HEADING_REGEX = r"^#{1,6}\s[\s\S]*"
 CODE_REGEX = r"^`{3}\n[\s\S]+`{3}$"
-QUOTE_REGEX = r"(?:^>[^\n]*\n*)+/m"
-UNORDERED_LIST_REGEX = r"(?:^-\s[^\n]*\n*)+/m"
-ORDERED_LIST_REGEX = r"^\d+\.\s.*$/m"
+QUOTE_REGEX = r"(?:^>[^\n]*\n*)+"
+UNORDERED_LIST_REGEX = r"(?:^-\s[^\n]*\n*)+"
+ORDERED_LIST_REGEX = r"^\d+\.\s.*$"
 
 class BlockType(Enum):
     PARAGRAPH = "paragraph"
@@ -22,12 +22,12 @@ def block_to_block_type(markdown_block: str) -> BlockType:
         return BlockType.HEADING
     elif len(re.findall(CODE_REGEX, markdown_block)) > 0:
         return BlockType.CODE
-    elif len(re.findall(QUOTE_REGEX, markdown_block)) > 0:
+    elif len(re.findall(QUOTE_REGEX, markdown_block, re.MULTILINE)) > 0:
         return BlockType.QUOTE
-    elif len(re.findall(UNORDERED_LIST_REGEX, markdown_block)) > 0:
+    elif len(re.findall(UNORDERED_LIST_REGEX, markdown_block, re.MULTILINE)) > 0:
         return BlockType.UNORDERED_LIST
     else:
-        matches = re.findall(ORDERED_LIST_REGEX, markdown_block)
+        matches = re.findall(ORDERED_LIST_REGEX, markdown_block, re.MULTILINE)
 
         if len(matches) != 0:
 

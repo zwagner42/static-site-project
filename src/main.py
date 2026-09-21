@@ -1,8 +1,12 @@
-from textnode import TextNode, TextType
+from pathlib import Path
+
+from copystatic import static_to_public
+from generatepage import generate_pages_recursive
 
 
 def main():
-    textNode = TextNode("This is some anchor text", TextType.LINK, "https://www.bootdev")
-    print(textNode)
+    static_to_public()
+
+    generate_pages_recursive(Path("content"), Path("template.html"), Path("public"))
 
 main()

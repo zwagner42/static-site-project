@@ -3,6 +3,7 @@ import unittest
 from markdown_helpers import (
     extract_markdown_images,
     extract_markdown_links,
+    extract_title,
     markdown_to_blocks,
     markdown_to_html_node,
     split_nodes_delimiter,
@@ -211,5 +212,27 @@ the **same** even with inline stuff
         )
 
     #TODO Write more test for markdown_to_html_node, markdown_to_blocks
+
+    def test_extract_title(self):
+        markdown = """
+# This is a simple test
+
+We're going to get a title from this
+        """
+
+        title = extract_title(markdown)
+        self.assertEqual(title, "This is a simple test")
+
+    def test_extract_title_simple_fail(self):
+        markdown = """
+#### This is not a title Lol
+
+> Why not add a quote here for testing
+        """
+
+
+        with self.assertRaises(ValueError):
+            _ = extract_title(markdown)
+
 if __name__ == "__main__":
     unittest.main()

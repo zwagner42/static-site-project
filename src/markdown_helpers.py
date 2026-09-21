@@ -2,8 +2,7 @@ import re
 
 from blocktype import BlockType, block_to_block_type
 from htmlnode import HTMLNode
-from leafnode import LeafNode
-from src.parentnode import ParentNode
+from parentnode import ParentNode
 from textnode import TextNode, TextType, text_node_to_html_node
 
 
@@ -41,6 +40,15 @@ def markdown_to_html_node(markdown: str) -> HTMLNode:
         children.append(new_node)
 
     return ParentNode("div", children)
+
+def extract_title(markdown: str):
+    items = markdown.split("\n")
+
+    for item in items:
+        if item.startswith("# "):
+            return item[2:].strip()
+
+    raise ValueError("No title found in the markdown provided")
 
 
 def block_to_html_node(block) -> ParentNode:
